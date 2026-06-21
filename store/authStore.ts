@@ -14,7 +14,7 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
+export const useAuthStore = create<AuthState>((set) => ({
   user:        null,
   token:       null,
   loading:     false,
@@ -25,13 +25,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = await SecureStore.getItemAsync("session_token");
       const raw   = await SecureStore.getItemAsync("user");
       if (token && raw) {
-        set({ token, user: JSON.parse(raw), initialized: true });
-        // Refresh user data from server
-        const { data } = await api.get("/api/users");
-        if (data.success) {
-          set({ user: data.data });
-          await SecureStore.setItemAsync("user", JSON.stringify(data.data));
-        }
+        const user = JSON.parse(raw);
+        set({ token, user, initialized: true });
+        // Refresh in background — don't block startup
+        api.get("/api/users").then(({ data }) => {
+          if (data.success) {
+            set({ user: data.data });
+            SecureStore.setItemAsync("user", JSON.stringify(data.data));
+          }
+        }).catch(() => {});
       } else {
         set({ initialized: true });
       }
@@ -55,8 +57,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signOut: async () => {
-    await SecureStore.deleteItemAsync("session_token");
-    await SecureStore.deleteItemAsync("user");
+    try {
+      await SecureStore.deleteItemAsync("session_token");
+      await SecureStore.deleteItemAsync("user");
+    } catch {}
     set({ user: null, token: null });
   },
 
