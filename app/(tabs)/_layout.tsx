@@ -3,65 +3,70 @@ import { View, Text, StyleSheet } from "react-native";
 import { Colors } from "../../lib/colors";
 import { useCartStore } from "../../store/cartStore";
 
-function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
+type IconName = "home" | "shop" | "digital" | "cart" | "account";
+
+function TabIcon({ name, focused }: { name: IconName; focused: boolean }) {
+  const icons: Record<IconName, { active: string; inactive: string }> = {
+    home:    { active: "⬜", inactive: "⬜" },
+    shop:    { active: "⬜", inactive: "⬜" },
+    digital: { active: "⬜", inactive: "⬜" },
+    cart:    { active: "⬜", inactive: "⬜" },
+    account: { active: "⬜", inactive: "⬜" },
+  };
+
+  const labels: Record<IconName, string> = {
+    home: "Home", shop: "Shop", digital: "Digital", cart: "Cart", account: "Account",
+  };
+
+  const svgs: Record<IconName, string> = {
+    home:    "🏠",
+    shop:    "🛍️",
+    digital: "⚡",
+    cart:    "🛒",
+    account: "👤",
+  };
+
   return (
-    <View style={styles.tabItem}>
-      <Text style={[styles.emoji, focused && { transform: [{ scale: 1.1 }] }]}>{emoji}</Text>
-      <Text style={[styles.tabLabel, { color: focused ? Colors.brand : Colors.textLight }]}>{label}</Text>
+    <View style={tabStyles.wrap}>
+      <Text style={[tabStyles.icon, focused && tabStyles.iconActive]}>{svgs[name]}</Text>
+      <Text style={[tabStyles.label, { color: focused ? Colors.brand : Colors.textLight }]}>
+        {labels[name]}
+      </Text>
     </View>
   );
 }
 
 export default function TabsLayout() {
   const count = useCartStore((s) => s.count());
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: styles.bar,
-        tabBarShowLabel: false,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label="Home" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="shop"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🛍️" label="Shop" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="digital"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="⚡" label="Digital" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <View>
-              <TabIcon emoji="🛒" label="Cart" focused={focused} />
-              {count > 0 && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>{count > 9 ? "9+" : count}</Text>
-                </View>
-              )}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👤" label="Account" focused={focused} /> }}
-      />
+    <Tabs screenOptions={{ headerShown: false, tabBarStyle: tabStyles.bar, tabBarShowLabel: false }}>
+      <Tabs.Screen name="index"   options={{ tabBarIcon: ({ focused }) => <TabIcon name="home"    focused={focused} /> }} />
+      <Tabs.Screen name="shop"    options={{ tabBarIcon: ({ focused }) => <TabIcon name="shop"    focused={focused} /> }} />
+      <Tabs.Screen name="digital" options={{ tabBarIcon: ({ focused }) => <TabIcon name="digital" focused={focused} /> }} />
+      <Tabs.Screen name="cart"    options={{
+        tabBarIcon: ({ focused }) => (
+          <View>
+            <TabIcon name="cart" focused={focused} />
+            {count > 0 && (
+              <View style={tabStyles.badge}>
+                <Text style={tabStyles.badgeText}>{count > 9 ? "9+" : count}</Text>
+              </View>
+            )}
+          </View>
+        ),
+      }} />
+      <Tabs.Screen name="account" options={{ tabBarIcon: ({ focused }) => <TabIcon name="account" focused={focused} /> }} />
     </Tabs>
   );
 }
 
-const styles = StyleSheet.create({
-  bar:       { backgroundColor: "#fff", borderTopColor: Colors.border, borderTopWidth: 1, height: 70, paddingBottom: 10 },
-  tabItem:   { alignItems: "center", justifyContent: "center", gap: 2 },
-  emoji:     { fontSize: 22 },
-  tabLabel:  { fontSize: 10, fontWeight: "500" },
-  badge:     { position: "absolute", top: -2, right: -6, backgroundColor: Colors.error, borderRadius: 8, minWidth: 16, height: 16, alignItems: "center", justifyContent: "center" },
-  badgeText: { color: "#fff", fontSize: 9, fontWeight: "700" },
+const tabStyles = StyleSheet.create({
+  bar:       { backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: "#f0e8dc", height: 64, paddingBottom: 8, paddingTop: 6, elevation: 12, shadowColor: "#000", shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+  wrap:      { alignItems: "center", gap: 2 },
+  icon:      { fontSize: 20, opacity: 0.5 },
+  iconActive:{ opacity: 1 },
+  label:     { fontSize: 9, fontWeight: "600", letterSpacing: 0.3 },
+  badge:     { position: "absolute", top: -2, right: -8, backgroundColor: Colors.error, borderRadius: 8, minWidth: 15, height: 15, alignItems: "center", justifyContent: "center" },
+  badgeText: { color: "#fff", fontSize: 8, fontWeight: "700" },
 });
